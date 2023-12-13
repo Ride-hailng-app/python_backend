@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RIDER FX</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    body {
+      background-color: #000000;
+    }
+
+    .rounded-corners {
+      /*border-radius: 10px;*/
+    }
+
+    #user_data {
+      background-color:black;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 10px;
+      display: block;
+      border: 2px solid white;
+      align-items: center;
+    }
+
+    #profile_icon {
+      width: 30px;
+      height: 30px;
+      background-color: #ffffff;
+      /*border-radius: 50%;*/
+      margin-right: 10px;
+    }
+
+    #utility_btns_div {
+      background-color:#000000;
+      color: #ffffff;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 2px solid white;
+    }
+
+    #order_form_div {
+      display: block;
+      margin-top: 1%;
+      background-color: #000000;
+      color: #ffffff;
+      font-weight: bold;
+      margin-top: 1%;
+      border: 2px solid white;
+      /*border-radius: 10px;*/
+    }
+
+    #map {
+      /* Add your map styling here */
+    }
+
+    #get_ride_btn {
+      background-color: blue;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 15px;
+      border: none;
+      /*border-radius: 5px;*/
+    }
+
+    .nxt_btn {
+      background-color: blue;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px;
+     
+      /*border-radius: 5px;*/
+    }
+
+    #dest_div
+    {
+      display:none;
+    }
+
+    #predprice_div
+    {
+      display:none;
+    }
+
+    #chooserider_div
+    {
+      display:none;
+    }
+
+    .order_kid_in
+    {
+      padding: 8px;
+      width:55%;
+      height: 2%;
+    }
+    
+    #nxtdest_div
+    {
+			display: none;
+	}
+  </style>
+  
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <script>
+    var map;
+    var ur_price = 0;
+    var user_markers = [];
+    var isocket;
+    var active_lat = 0;
+    var active_lon = 0;
+
+    var pick_up_lat = 0;
+    var pick_up_lon = 0;
+
+    var marker_color = "red";
+
+    var dest_lat = 0;
+    var dest_lon = 0;
+
+    var map_action = 0;
+    var loco_steps = 0;
+
+    function showMark(xlatitude,ylatitude)
+    {
+      var latitude = xlatitude;//40.7128;
+        var longitude = ylatitude;//-74.0060;
+        //console.log(latitude)
+        // Create the map centered on the coordinates
+        //const map = L.map('map');///.setView([latitude, longitude], 13);
+        var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+        // Add the OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Add a marker for the coordinates
+        L.marker([latitude, longitude],{icon: customIcon}).addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+    }
+
+
+
+    function showMark(xlatitude,ylatitude,mlabel)
+    {
+      var latitude = xlatitude;//40.7128;
+        var longitude = ylatitude;//-74.0060;
+        //console.log(latitude)
+        // Create the map centered on the coordinates
+        //const map = L.map('map');///.setView([latitude, longitude], 13);
+        var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+        // Add the OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Add a marker for the coordinates
+        L.marker([latitude, longitude],{icon: customIcon}).addTo(map)
+            .bindPopup(mlabel+' Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+    }
+
+
+
+    function chooseLoc()
+    {
+      $("#map").focus();
+    }
+
+    function getCookieValue(cookieName) {
+                var cookies = document.cookie.split('; ');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].split('=');
+                    var name = cookie[0];
+                    var value = cookie[1];
+                    if (name === cookieName) {
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null; // Cookie not found
+            }
+    
+    function prevswitcher()
+    {
+      if(loco_steps!=0)
+      {
+      loco_steps = loco_steps-1;
+      }
+      switch(loco_steps)
+      {
+        case 0:
+          $("#pickup_div").show();
+          $("#dest_div").hide();
+
+          marker_color = 'red';
+          
+        break;
+        
+        case 1:
+          $("#dest_div").show();
+          $("#predprice_div").hide();
+
+          
+          
+        break;
+
+        case 2:
+          $("#predprice_div").show();
+          $("#chooserider_div").hide();
+          
+          
+        break;
+      }
+      
+    }
+    
+    function approvefx()
+    {
+		const ws_json = {};
+            ws_json["guy_cook"] = getCookieValue("guy_cook");
+            ws_json["guy_type"] = getCookieValue("guy_type");
+			ws_json["guy_cmd"] = "approve_order";
+            ws_data = JSON.stringify(ws_json);
+            alert(ws_data);
+            isocket.send(ws_data);
+		
+	}
+
+    function cscan() {
+      // Read form values
+      nxtswitcher();
+      var ulatitude = pick_up_lat;
+      var ulongitude = pick_up_lon;
+
+      //var dlatitude = dest_lat;
+      //var dlongitude = dest_lon;
+      //showMark(latitude,longitude);
+      //alert(latitude);
+      // Create JSON object
+      var requestData = {
+        latitude: ulatitude,
+        longitude: ulongitude,
+      };
+      //$('#div_msg').text(JSON.stringify(requestData));
+      // Send AJAX POST request to /lookrider endpoint
+      //nxtswitcher();
+      $.ajax({
+        type: 'POST',
+        url: '/lookrider',
+        data: JSON.stringify(requestData),
+        contentType: 'application/json',
+        success: function(response)
+        {
+          
+          if( Object.keys(response).length>0)
+          {
+				const status = response.status;
+				switch(status)
+				{
+				  case 200:
+						const ihost = window.location.host;
+						alert("host is: "+ihost);
+						isocket = new WebSocket('ws://'+ihost+'/approve');
+		
+
+						isocket.onmessage = function (event)
+						{
+							// Handle the incoming message here
+							alert("order here");
+							var ws_json_data = JSON.parse(event.data);
+							var json_data = ws_json_data["message"];
+							alert(json_data);
+							$('#scan_txt').hide();
+							$('#order_details').text(json_data["names"]);
+							$('#nxtdest_div').show();
+							showMark(json_data["coords"]['latitude'],json_data["coords"]['longitude'],"Customer");
+                
+						};
+  
+						isocket.onclose = function (event)
+						{
+							console.log('WebSocket connection closed');
+						};
+
+					
+						isocket.onopen = function (event)
+						{
+							const ws_json = {};
+							ws_json["guy_cook"] = getCookieValue("guy_cook");
+							ws_json["guy_type"] = getCookieValue("guy_type");
+							ws_json["guy_cmd"] = "start_scan";
+							ws_data = JSON.stringify(ws_json);
+            
+							isocket.send(ws_data);
+						};
+				   break;
+				   
+				   case 400:
+						alert("request error");
+					
+					break;
+					
+					default:
+						alert("unknown response");
+				}
+			}
+			else
+			{
+						alert("no nearby rider found");
+          
+			}
+        },
+        error: function()
+        {
+          alert("error occured");
+          
+        }
+      });
+    }
+
+    function nxtswitcher()
+    {
+     
+      switch(loco_steps)
+      {
+        case 0:
+          $("#pickup_div").hide();
+          $("#dest_div").show();
+
+          pick_up_lat = active_lat;
+          pick_up_lon = active_lon;
+          marker_color = 'blue';
+          
+        break;
+        
+        case 1:
+          $("#dest_div").hide();
+          $("#predprice_div").show();
+
+          dest_lat = active_lat;
+          dest_lon = active_lon;
+		  approvefx();
+          ///alert("going to: "+dest_lat+"from: "+pick_up_lat);
+          
+        break;
+
+        case 2:
+          $("#predprice_div").hide();
+          $("#chooserider_div").show();
+          
+        break;
+      }
+      loco_steps = loco_steps+1;
+    }
+    
+    
+    function initMap() 
+    {
+    // Initialize Leaflet map
+    map = L.map('map').setView([0.3222496209212994, 32.56208181381226], 20);
+
+    // Add OpenStreetMap tiles to the map
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Add a click event listener to the map
+    map.on('click', function(event) {
+      // Get latitude and longitude from the clicked point
+      var latitude = event.latlng.lat;
+      var longitude = event.latlng.lng;
+
+      active_lat = latitude;
+      active_lon = longitude;
+
+      var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-'+marker_color+'.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+
+        var user_marker = user_markers[loco_steps];
+        if (user_marker)
+      {
+        map.removeLayer(user_marker);
+      }
+      //alert("locol step: "+loco_steps);
+      user_markers[loco_steps] = L.marker([latitude, longitude],{ icon: customIcon });
+      user_marker = user_markers[loco_steps];
+      user_marker.addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+      
+      // Automatically fill the div_fx fields with the coordinates
+     // document.getElementById('latitude').value = latitude;
+      //document.getElementById('longitude').value = longitude;
+    });
+
+    // Add search box control to the map
+    var searchControl = L.Control.geocoder({
+      defaultMarkGeocode: false,
+      placeholder: 'Search location...',
+    }).on('markgeocode', function(event) {
+      // Get the selected location from the search result
+      var latitude = event.geocode.center.lat;
+      var longitude = event.geocode.center.lng;
+
+      // Center the map on the selected location
+      map.setView([latitude, longitude], 20);
+      
+      var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+
+      if (user_marker)
+      {
+        map.removeLayer(user_marker);
+      }
+      user_marker = L.marker([latitude, longitude],{ icon: customIcon })
+      user_marker.addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+      document.getElementById('latitude').value = latitude;
+      document.getElementById('longitude').value = longitude;
+    
+    }).addTo(map);
+
+  }
+
+ 
+  
+  $(document).ready(function()
+  {
+      // Attach click event to user_in button
+      //$('#user_in').on('click', onboardUser);
+
+      // Attach click event to search_rider button
+      //$('#search_rider').on('click', getRider);
+
+      // Attach click event to map to get latitude and longitude
+      // Your code here to get latitude and longitude on map click
+      
+
+      initMap();
+    });
+  </script>
+</head>
+<body>
+  <div id="user_data" class="rounded-corners">
+    <div id="profile_icon">
+      <!-- Bootstrap person icon goes here -->
+    </div>
+    <div id="user_names">
+      {{fast_user_names}}
+    </div><br/>
+    <div id="user_type">
+      {{fast_user_type}}
+    </div>
+  </div>
+
+  <div id="utility_btns_div" class="rounded-corners">
+    <!--button id="get_ride_btn">Get ride</button-->
+  </div>
+
+  <div id="order_form_div">
+    <center><b>FIND CUSTOMER</b></center><br/>
+
+      <div  id="pickup_div">
+          <input class="order_kid_in" type="text" id="pickup_location" placeholder="Choose stage below" onfocus="chooseLoc()" readonly>
+          <button class="nxt_btn" id="nxtpickup_btn" onclick="cscan()">SCAN</button>
+      </div>
+
+      <div class="order_kid_divs" id="dest_div">
+		  <div id="scan_txt">Scanning please wait......</div>
+		  <div id = "order_details"></div>
+          <br/>
+          <button class="nxt_btn" id="prevdest_div" onclick="prevswitcher()">CANCEL</button><button  class="nxt_btn" id="nxtdest_div" onclick="nxtswitcher()">APPROVE ORDER</button>
+      </div>
+
+      <div class="order_kid_divs" id="predprice_div">      
+        <div id="pred_price">Going to customer</div><br/>
+        <!--input class="order_kid_in" type="text" id="ride_distance" placeholder="Predicted distance to travel" readonly><br/-->
+        <!--input class="order_kid_in" type="text" id="user_price" placeholder="What's your price"><br/-->
+        <!--button class="nxt_btn" id="prevdest_div" onclick="prevswitcher()">PREVIOUS</button-->
+        <button class="nxt_btn" id="find_riders_btn" onclick="startRider()">START RIDE</button>
+      </div>
+    
+      <div class="order_kid_divs" id="chooserider_div">
+		  in ride<br/>
+        <!--input class="order_kid_in" type="text" id="ride_distance" placeholder="Choose rider blue rider" readonly><br/>
+        <button class="nxt_btn" id="prevdest_div" onclick="prevswitcher()">CANCEL</button-->
+        <button class="nxt_btn" id="order_ride">FINISH RIDE</button>
+      </div>
+    
+  </div>
+
+  <div id="map" style="height: 400px;">
+    <!-- Add your map here -->
+  </div>
+
+ 
+  <script>
+    // Global variables to store latitude and longitude values
+    let u_lat, u_lon, d_lat, d_lon;
+
+    // Function to show the order_form_div and hide utility_btns_div
+    $("#get_ride_btn").click(function() {
+      $("#utility_btns_div").hide();
+      $("#order_form_div").show();
+    });
+
+    //$("#nxtpickup_btn").click(nxtswitcher());
+    // Function to run when the order_ride button is clicked
+    $("#order_ride").click(function() {
+      // Collect data and create a JSON object
+      const userPrice = $("#user_price").val();
+      const rideJson = {
+        u_lat: u_lat,
+        u_lon: u_lon,
+        d_lat: d_lat,
+        d_lon: d_lon,
+        user_price: userPrice
+      };
+
+      // Post the JSON object to the /orderRide endpoint
+      $.post("/orderRide", rideJson, function(data, status) {
+        // Handle the response if needed
+        console.log("Response from /orderRide:", data, status);
+      });
+    });
+
+    // Function to run when pickup_location is focused
+    function choosePickup() {
+      // Implement your functionality here
+      // Example: Get latitude and longitude and assign them to u_lat and u_lon
+    }
+
+    // Function to run when drop_location is focused
+    function chooseDropoff() {
+      // Implement your functionality here
+      // Example: Get latitude and longitude and assign them to d_lat and d_lon
+    }
+
+    // Attach event listeners to the pickup_location and drop_location inputs
+    //$("#pickup_location").focus(choosePickup);
+    //$("#drop_location").focus(chooseDropoff);
+  </script>
+</body>
+</html>

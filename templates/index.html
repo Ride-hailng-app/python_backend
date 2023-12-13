@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Onboard Page</title>
+    <style>
+        body {
+            background-color:#000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #onboard {
+            border: 2px solid #ffffff;
+            color: white;
+            width: 300px;
+            padding: 20px;
+            text-align: center;
+            background-color: #000000;
+        }
+        #register_div {
+            display: none;
+        }
+
+        #login_div
+        {
+            display:block;
+        }
+
+        #alt_register_div {
+            display: none;
+        }
+        #register_form, #login_form {
+            text-align: left;
+        }
+        .text_field {
+            margin-bottom: 10px;
+            display: block;
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .radio_field {
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .submit_btn {
+            display: block;
+            background-color: rgb(38, 38, 192);
+            color: white;
+            font-weight: bold;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+    function login()
+    {
+      // Read form values
+    
+      var telephone = $('#ltelno').val();
+      var passcode = $('#lpasscode').val();
+    
+
+      // Create JSON object
+      var userData = {
+        telephone: telephone,
+        passcode: passcode,
+      };
+      //$('#div_msg').text(JSON.stringify(userData));
+      // Send AJAX POST request to /user_on endpoint
+      $.ajax({
+        type: 'POST',
+        url: '/login',
+        data: JSON.stringify(userData),
+        contentType: 'application/json',
+        success: function(response) {
+            let status = response.status;
+            
+            switch(status)
+            {
+                
+            case 200:
+                if (response.redirect)
+                {
+      // data.redirect contains the string URL to redirect to
+
+      
+                    window.location.replace(response.redirect);
+                }
+                else
+                {
+          // Update div_msg with the response message
+          //var json_obj = JSON.parse(response);
+                    $('#reg_msg_div').text((response.message));
+                }
+            break;
+            case 404:
+                alert(response.message);
+            break;
+            
+            default:
+                alert("oops");
+            }
+        },
+        error: function() {s
+          $('#reg_msg_div').text('Error occurred while processing the request.');
+        }
+      });
+    }
+        
+        
+    function regUser() {
+      // Read form values
+      var name = $('#name').val();
+      var telephone = $('#telephone').val();
+      var passcode = $('#passcode').val();
+      var user_type = $('input[name="usertype"]:checked').val();
+
+      // Create JSON object
+      var userData = {
+        name: name,
+        telephone: telephone,
+        passcode: passcode,
+        user_type: user_type
+      };
+      //$('#div_msg').text(JSON.stringify(userData));
+      // Send AJAX POST request to /user_on endpoint
+      $.ajax({
+        type: 'POST',
+        url: '/register',
+        data: JSON.stringify(userData),
+        contentType: 'application/json',
+        success: function(response) {
+            alert(response.redirect);
+            if (response.redirect) {
+      // data.redirect contains the string URL to redirect to
+
+      
+      window.location.replace(response.redirect);
+    }
+    else
+    {
+          // Update div_msg with the response message
+          //var json_obj = JSON.parse(response);
+          $('#reg_msg_div').text((response.message));
+    }
+        },
+        error: function() {s
+          $('#reg_msg_div').text('Error occurred while processing the request.');
+        }
+      });
+    }
+    </script>
+</head>
+<body>
+    <center>
+    <div id="onboard">
+        <div id="register_div">
+            <form id="register_form" method="post" action="/register">
+                <input type="text" id="name" name="name" placeholder="Name" class="text_field">
+                <input type="text" id="telephone" name="telno" placeholder="Phone Number" class="text_field">
+                <input type="password" id="passcode" name="passcode" placeholder="Password" class="text_field">
+                <label class="radio_field">
+                    <input type="radio" name="usertype" value="rider">Rider
+                </label>
+                <label class="radio_field">
+                    <input type="radio" name="usertype" value="customer">Customer
+                </label>
+                <button type="button" class="submit_btn" id="register_btn" onclick="regUser()">REGISTER</button>
+            </form>
+        </div>
+
+        <div id="login_div">
+            <form id="login_form" method="post">
+                <input type="text" id = "ltelno" name="telno" placeholder="Phone Number" class="text_field">
+                <input type="password" id="lpasscode" name="password" placeholder="Password" class="text_field">
+                <button type="button" class="submit_btn" id="login_btn" onclick="login()">LOGIN</button>
+            </form>
+        </div>
+
+        <div id="alt_login_div">
+            <div id="login_msg_div" style="color: white;">New user, please click below.</div>
+            <button class="submit_btn" id="create_usr_btn">CREATE USER</button>
+        </div>
+
+        <div id="alt_register_div">
+            <div id="reg_msg_div" style="color: white;">AlREADY HAVE AN ACCOUNT, please click below.</div>
+            <button class="submit_btn" id="old_usr_btn">LOGIN USER</button>
+        </div>
+    </div>
+    </center>
+
+    <script>
+        document.getElementById("create_usr_btn").addEventListener("click", function() {
+            document.getElementById("register_div").style.display = "block";
+            document.getElementById("login_div").style.display = "none";
+            document.getElementById("alt_login_div").style.display = "none";
+            document.getElementById("alt_register_div").style.display = "block";
+        });
+
+        document.getElementById("old_usr_btn").addEventListener("click", function() {
+            document.getElementById("login_div").style.display = "block";
+            document.getElementById("register_div").style.display = "none";
+            document.getElementById("alt_login_div").style.display = "block";
+            document.getElementById("alt_register_div").style.display = "none";
+        });
+    </script>
+<div id="inject_pane"></div>
+</body>
+</html>

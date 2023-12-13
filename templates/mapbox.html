@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Customer</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    body {
+      background-color: #000000;
+    }
+
+    .rounded-corners {
+      /*border-radius: 10px;*/
+    }
+
+    #user_data {
+      background-color:black;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 10px;
+      display: block;
+      border: 2px solid white;
+      align-items: center;
+    }
+
+    #profile_icon {
+      width: 30px;
+      height: 30px;
+      background-color: #ffffff;
+      /*border-radius: 50%;*/
+      margin-right: 10px;
+    }
+
+    #utility_btns_div {
+      background-color:#000000;
+      color: #ffffff;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 2px solid white;
+    }
+
+    #order_form_div {
+      display: block;
+      margin-top: 1%;
+      background-color: #000000;
+      color: #ffffff;
+      font-weight: bold;
+      margin-top: 1%;
+      border: 2px solid white;
+      /*border-radius: 10px;*/
+    }
+
+    #map {
+      /* Add your map styling here */
+    }
+
+    #get_ride_btn {
+      background-color: blue;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px 15px;
+      border: none;
+      /*border-radius: 5px;*/
+    }
+
+    .nxt_btn {
+      background-color: blue;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 8px;
+     
+      /*border-radius: 5px;*/
+    }
+
+    #dest_div
+    {
+      display:none;
+    }
+
+    #predprice_div
+    {
+      display:none;
+    }
+
+    #chooserider_div
+    {
+      display:none;
+    }
+
+    .order_kid_in
+    {
+      padding: 8px;
+      width:55%;
+      height: 2%;
+    }
+    
+    #order_ride
+    {
+      display:none;
+    }
+    
+    #user_price
+    {
+      display: none;
+    }
+    
+    #order_details
+    {
+      display:none;
+    }
+    
+    #approv_div
+    {
+      display:block;
+      background-color:white;
+      color: black;
+    }
+  </style>
+  
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <script>
+    var map;
+    var ur_price = 0;
+    var user_markers = [];
+    var isocket;
+    var active_lat = 0;
+    var active_lon = 0;
+
+    var pick_up_lat = 0;
+    var pick_up_lon = 0;
+
+    var marker_color = "red";
+
+    var dest_lat = 0;
+    var dest_lon = 0;
+
+    var map_action = 0;
+    var loco_steps = 0;
+
+    function showMark(xlatitude,ylatitude)
+    {
+      var latitude = xlatitude;//40.7128;
+        var longitude = ylatitude;//-74.0060;
+        //console.log(latitude)
+        // Create the map centered on the coordinates
+        //const map = L.map('map');///.setView([latitude, longitude], 13);
+        var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+        // Add the OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Add a marker for the coordinates
+        L.marker([latitude, longitude],{icon: customIcon}).addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+    }
+
+    function chooseLoc()
+    {
+      $("#map").focus();
+    }
+
+    function getCookieValue(cookieName) {
+                var cookies = document.cookie.split('; ');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].split('=');
+                    var name = cookie[0];
+                    var value = cookie[1];
+                    if (name === cookieName) {
+                        return decodeURIComponent(value);
+                    }
+                }
+                return null; // Cookie not found
+            }
+    
+    function prevswitcher()
+    {
+      if(loco_steps!=0)
+      {
+      loco_steps = loco_steps-1;
+      }
+      switch(loco_steps)
+      {
+        case 0:
+          $("#pickup_div").show();
+          $("#dest_div").hide();
+
+          marker_color = 'red';
+          
+        break;
+        
+        case 1:
+          $("#dest_div").show();
+          $("#predprice_div").hide();
+
+          
+          
+        break;
+
+        case 2:
+          $("#predprice_div").show();
+          $("#chooserider_div").hide();
+          
+          
+        break;
+      }
+      
+    }
+  
+  
+  
+    
+    function showMark(xlatitude,ylatitude,mlabel)
+    {
+      var latitude = xlatitude;//40.7128;
+        var longitude = ylatitude;//-74.0060;
+        //console.log(latitude)
+        // Create the map centered on the coordinates
+        //const map = L.map('map');///.setView([latitude, longitude], 13);
+        var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+        // Add the OpenStreetMap base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Add a marker for the coordinates
+        L.marker([latitude, longitude],{icon: customIcon}).addTo(map)
+            .bindPopup(mlabel+' Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+    }
+
+  
+    
+    function approveRide(order)
+    {
+      $("#order_ride").show();
+      $("#approv_div").text("order approved");
+      const rname = order["name"];
+      const rtel = order["tel"];
+      const rprice = 5000;
+      
+      $("#rider_name").text(rname);
+      $("#rider_tel").text(rtel);
+      $("#price_tag").text(rprice);
+      
+      $("#order_details").show();
+      
+    }
+    
+    
+    function getRiders() {
+      // Read form values
+      var ulatitude = pick_up_lat;
+      var ulongitude = pick_up_lon;
+
+      var dlatitude = dest_lat;
+      var dlongitude = dest_lon;
+      //showMark(latitude,longitude);
+      //alert(latitude);
+      // Create JSON object
+      var requestData = {
+        latitude: ulatitude,
+        longitude: ulongitude,
+        to_latitude: dlatitude,
+        to_longitude: dlongitude,
+        user_price:ur_price
+      };
+      //$('#div_msg').text(JSON.stringify(requestData));
+      // Send AJAX POST request to /lookrider endpoint
+      $.ajax({
+        type: 'POST',
+        url: '/lookrider',
+        data: JSON.stringify(requestData),
+        contentType: 'application/json',
+        success: function(response) {
+          // Update div_msg with the response message
+          if( Object.keys(response).length>0)
+          {
+          //$('#div_msg').text("got rider:" + response[0].id);
+         /* if (user_marker)
+          {
+            map.removeLayer(user_marker);
+          }
+          */
+          const status = response.status;
+          //alert(status);
+          
+          switch(status)
+          {
+            case 200:
+                showMark(response.message.coords[0],response.message.coords[1],"Rider");
+                nxtswitcher();
+                //user_marker.addTo(map);
+                const ihost = window.location.host;
+                alert("host is: "+ihost);
+                isocket = new WebSocket('ws://'+ihost+'/approve');
+                                      
+                    isocket.onmessage = function (event)
+                    {
+                    // Handle the incoming message here
+                      alert("order approved");
+                      approveRide(JSON.parse(event.data));
+                //$('#message-container').append('<p>' + event.data + '</p>');
+                    };
+  
+                    isocket.onclose = function (event)
+                    {
+                        console.log('WebSocket connection closed');
+                    };
+
+                    isocket.onopen = function (event)
+                    {
+                        const ws_json = {};
+                        ws_json["guy_cook"] = getCookieValue("guy_cook");
+                        ws_json["guy_type"] = getCookieValue("guy_type");
+                        ws_json["guy_cmd"] = "match_user"
+                      
+                        ws_data = JSON.stringify(ws_json);
+                        alert(ws_data);
+                        isocket.send(ws_data);
+                    };
+            break;
+            
+            case 400:
+                    $("#rider_msgs").text(response.message);
+            break;
+            
+            default:
+              alert("big error");
+            
+            
+          }
+          
+      // Initialize Google Maps on page load
+
+        }
+        else
+        {
+          alert("no nearby rider found");
+          //$('#div_msg').text("no nearby rider found");
+        }
+        },
+        error: function() {
+          alert("error occiured");
+          //$('#div_msg').text('Error occurred while processing the request.');
+        }
+      });
+    }
+
+    function nxtswitcher()
+    {
+     
+      switch(loco_steps)
+      {
+        case 0:
+          $("#pickup_div").hide();
+          $("#dest_div").show();
+
+          pick_up_lat = active_lat;
+          pick_up_lon = active_lon;
+          marker_color = 'blue';
+          
+        break;
+        
+        case 1:
+          $("#dest_div").hide();
+          $("#predprice_div").show();
+
+          dest_lat = active_lat;
+          dest_lon = active_lon;
+
+          alert("going to: "+dest_lat+"from: "+pick_up_lat);
+          
+        break;
+
+        case 2:
+          $("#predprice_div").hide();
+          $("#chooserider_div").show();
+          
+        break;
+      }
+      loco_steps = loco_steps+1;
+    }
+    
+    
+    function initMap() 
+    {
+    // Initialize Leaflet map
+    map = L.map('map').setView([0.3222496209212994, 32.56208181381226], 20);
+
+    // Add OpenStreetMap tiles to the map
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Add a click event listener to the map
+    map.on('click', function(event) {
+      // Get latitude and longitude from the clicked point
+      var latitude = event.latlng.lat;
+      var longitude = event.latlng.lng;
+
+      active_lat = latitude;
+      active_lon = longitude;
+
+      var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-'+marker_color+'.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+
+        var user_marker = user_markers[loco_steps];
+        if (user_marker)
+      {
+        map.removeLayer(user_marker);
+      }
+      //alert("locol step: "+loco_steps);
+      user_markers[loco_steps] = L.marker([latitude, longitude],{ icon: customIcon });
+      user_marker = user_markers[loco_steps];
+      user_marker.addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+      
+      // Automatically fill the div_fx fields with the coordinates
+     // document.getElementById('latitude').value = latitude;
+      //document.getElementById('longitude').value = longitude;
+    });
+
+    // Add search box control to the map
+    var searchControl = L.Control.geocoder({
+      defaultMarkGeocode: false,
+      placeholder: 'Search location...',
+    }).on('markgeocode', function(event) {
+      // Get the selected location from the search result
+      var latitude = event.geocode.center.lat;
+      var longitude = event.geocode.center.lng;
+
+      // Center the map on the selected location
+      map.setView([latitude, longitude], 20);
+      
+      var customIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+        });
+
+      if (user_marker)
+      {
+        map.removeLayer(user_marker);
+      }
+      user_marker = L.marker([latitude, longitude],{ icon: customIcon })
+      user_marker.addTo(map)
+            .bindPopup('Your Coordinates<br>Latitude: ' + latitude + '<br>Longitude: ' + longitude)
+            .openPopup();
+      document.getElementById('latitude').value = latitude;
+      document.getElementById('longitude').value = longitude;
+    
+    }).addTo(map);
+
+  }
+
+ 
+  
+  $(document).ready(function()
+  {
+      // Attach click event to user_in button
+      //$('#user_in').on('click', onboardUser);
+
+      // Attach click event to search_rider button
+      //$('#search_rider').on('click', getRider);
+
+      // Attach click event to map to get latitude and longitude
+      // Your code here to get latitude and longitude on map click
+      
+
+      initMap();
+    });
+  </script>
+</head>
+<body>
+  <div id="map" style="height: 400px;">
+    <!-- Add your map here -->
+  </div>
+
+ 
+  <script>
+    // Global variables to store latitude and longitude values
+    let u_lat, u_lon, d_lat, d_lon;
+
+    // Function to show the order_form_div and hide utility_btns_div
+    $("#get_ride_btn").click(function() {
+      $("#utility_btns_div").hide();
+      $("#order_form_div").show();
+    });
+
+    //$("#nxtpickup_btn").click(nxtswitcher());
+    // Function to run when the order_ride button is clicked
+    $("#order_ride").click(function() {
+      // Collect data and create a JSON object
+      const userPrice = $("#user_price").val();
+      const rideJson = {
+        u_lat: u_lat,
+        u_lon: u_lon,
+        d_lat: d_lat,
+        d_lon: d_lon,
+        user_price: userPrice
+      };
+
+      // Post the JSON object to the /orderRide endpoint
+      $.post("/orderRide", rideJson, function(data, status) {
+        // Handle the response if needed
+        console.log("Response from /orderRide:", data, status);
+      });
+    });
+
+
+  </script>
+</body>
+</html>
